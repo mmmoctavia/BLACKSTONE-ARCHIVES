@@ -1,0 +1,702 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Blackstone Archive</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: fixed tree sidebar + scrolling workspace; every list is an even auto-fill grid, all text wraps or ellipsizes inside its box. */
+:root{
+  --bg:#0a0b0d; --panel:#111316; --panel2:#171a1e; --line:#23272d; --line2:#2f353d;
+  --fg:#d3d8df; --dim:#8a929d; --faint:#5b626c; --accent:#e9a23b; --accent-bg:rgba(233,162,59,.12);
+  --s-nv:#7b838e; --s-inv:#e9a23b; --s-done:#4fb477; --s-rev:#9b8cf0; --s-no:#e0605c;
+  --c-rec:#4fb477; --c-doc:#5aa2e6; --c-cor:#3fc4b6; --c-unv:#e9a23b; --c-con:#e0605c; --c-mis:#d86bb4; --c-int:#9b8cf0;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace; --sans:'IBM Plex Sans',system-ui,-apple-system,Segoe UI,sans-serif;
+  --r:4px; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.55 var(--sans);overflow:hidden}
+h1,h2,h3,p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.app{display:grid;grid-template-columns:272px minmax(0,1fr);height:100%}
+.side{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;padding:16px 12px 32px;min-width:0}
+.main{overflow-y:auto;min-width:0;height:100%}
+.top{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:12px max(16px,env(safe-area-inset-right,0px)) 12px 24px}
+.wrap{padding:24px max(16px,env(safe-area-inset-right,0px)) 64px 24px;max-width:1240px}
+.burger{display:none;background:none;border:1px solid var(--line2);border-radius:var(--r);padding:6px 10px;cursor:pointer;font-family:var(--mono)}
+.search{flex:1;min-width:0;max-width:420px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:8px 12px;font-family:var(--mono);font-size:12px}
+.crumb{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;margin-left:auto}
+.sync{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--faint);white-space:nowrap}
+/* sidebar */
+.brand{display:flex;align-items:center;gap:12px;padding:4px 8px 20px;font-family:var(--mono);font-weight:600;letter-spacing:.14em}
+.brand i{display:grid;place-items:center;width:24px;height:24px;background:var(--fg);color:var(--bg);font-style:normal;border-radius:2px;font-size:13px}
+.grp{margin-bottom:4px}
+.gh{display:flex;align-items:center;gap:8px;width:100%;background:none;border:0;padding:8px;cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--fg);text-align:left;border-radius:var(--r);min-width:0}
+.gh:hover,.gl:hover{background:var(--panel2)}
+.gh .car{width:10px;color:var(--faint);transition:transform .15s;flex:none}
+.gh[aria-expanded=true] .car{transform:rotate(90deg)}
+.gh span.t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gh .n{font-size:10px;color:var(--faint)}
+.kids{margin:0 0 8px 15px;padding-left:12px;border-left:1px dashed var(--line2)}
+.gh.sub{font-size:11px;padding:6px 8px;color:var(--dim)}
+.gsub{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);padding:8px 8px 4px}
+.kids[hidden]{display:none}
+.gl{display:flex;align-items:center;gap:8px;padding:6px 8px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);border-radius:var(--r);min-width:0}
+.gl span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.gl.on{color:var(--accent);background:var(--accent-bg)}
+.gl .dot{width:6px;height:6px;border-radius:50%;flex:none}
+/* page header */
+.ph{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.ph>div{min-width:0}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-bottom:4px}
+h1{font-family:var(--mono);font-size:22px;font-weight:500;letter-spacing:.02em;overflow-wrap:anywhere;text-wrap:balance}
+h2{font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.lead{color:var(--dim);max-width:70ch;margin-top:8px}
+.sec{margin-bottom:32px}
+.sh{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;min-width:0}
+.sh h2{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* controls */
+.btn{background:var(--panel2);border:1px solid var(--line2);border-radius:var(--r);padding:6px 12px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.pri{background:var(--accent);color:#16110a;border-color:var(--accent);font-weight:600}
+.btn.pri:hover{color:#16110a;filter:brightness(1.08)}
+.btn.sm{padding:3px 8px;font-size:10px}
+.btn.danger:hover{border-color:var(--s-no);color:var(--s-no)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.chip{background:none;border:1px solid var(--line2);border-radius:99px;padding:3px 12px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);cursor:pointer}
+.chip.on{border-color:var(--accent);color:var(--accent);background:var(--accent-bg)}
+/* cards + grids */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.grid.w{grid-template-columns:repeat(auto-fill,minmax(340px,1fr))}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin-bottom:32px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;min-width:0;display:flex;flex-direction:column;gap:8px}
+a.card:hover,.card.click:hover{border-color:var(--accent)}
+.card .t{font-weight:500;overflow-wrap:anywhere}
+.card .m{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.04em;overflow-wrap:anywhere}
+.card .b{color:var(--dim);font-size:13px;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.stat .big{font-family:var(--mono);font-size:30px;font-weight:500;line-height:1}
+.stat .m{text-transform:uppercase;letter-spacing:.1em}
+.list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r);background:var(--panel)}
+.li{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid var(--line);min-width:0}
+.li:first-child{border-top:0}
+a.li:hover{background:var(--panel2)}
+.li .tx{flex:1;min-width:0}
+.li .tx b{display:block;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.li .tx span{display:block;font-family:var(--mono);font-size:11px;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.empty{border:1px dashed var(--line2);border-radius:var(--r);padding:24px;color:var(--faint);font-size:13px;text-align:center;overflow-wrap:anywhere}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px}
+.two>*{min-width:0}
+/* pills */
+.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid currentColor;border-radius:99px;padding:1px 10px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;flex:none;max-width:100%}
+.pill::before{content:"";width:6px;height:6px;background:currentColor;border-radius:50%}
+.pill.sq::before{border-radius:1px}
+.tag{font-family:var(--mono);font-size:10px;color:var(--dim);border:1px solid var(--line2);border-radius:2px;padding:0 6px;overflow-wrap:anywhere}
+.bar{display:flex;height:8px;border-radius:2px;overflow:hidden;background:var(--panel2);margin:8px 0}
+.bar i{display:block;height:100%}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px 16px;font-family:var(--mono);font-size:11px;color:var(--dim)}
+.legend span{display:flex;align-items:center;gap:8px;min-width:0}
+.legend b{margin-left:auto;color:var(--fg);font-weight:500}
+.notice{border:1px solid var(--line2);border-radius:var(--r);padding:12px 16px;font-family:var(--mono);font-size:12px;color:var(--dim);overflow-wrap:anywhere}
+.notice b{display:block;font-size:10px;letter-spacing:.12em;color:var(--faint);margin-bottom:4px;font-weight:500}
+/* record page */
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+.kv div{min-width:0}
+.kv label,.fl{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:4px}
+.kv span{overflow-wrap:anywhere}
+.text{white-space:pre-wrap;overflow-wrap:anywhere;color:var(--fg)}
+.text.none{color:var(--faint);font-style:italic}
+.block{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:16px;min-width:0}
+.block .sh{margin-bottom:8px}
+.lk{display:flex;align-items:center;gap:12px;padding:8px 0;border-top:1px solid var(--line);min-width:0}
+.lk:first-of-type{border-top:0}
+.lk a{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lk a:hover{color:var(--accent)}
+.lk .ty{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);width:76px;flex:none}
+.unv{color:var(--c-unv)}
+.ev{display:inline-block;width:6px;height:6px}
+/* forms */
+.modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.7);display:flex;align-items:flex-start;justify-content:center;padding:max(24px,env(safe-area-inset-top,0px)) 16px 24px;overflow-y:auto}
+.modal[hidden]{display:none}
+.dlg{background:var(--panel);border:1px solid var(--line2);border-radius:var(--r);width:100%;max-width:620px;padding:24px;display:flex;flex-direction:column;gap:16px}
+.dlg h2{color:var(--fg)}
+.f{display:flex;flex-direction:column;min-width:0}
+.f input,.f select,.f textarea{background:var(--bg);border:1px solid var(--line2);border-radius:var(--r);padding:8px 12px;width:100%;min-width:0}
+.f textarea{min-height:96px;resize:vertical;font-family:var(--sans)}
+.f .hint{font-size:11px;color:var(--faint);margin-top:4px}
+.fg{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.checks{display:flex;flex-wrap:wrap;gap:8px 16px}
+.checks label{display:flex;align-items:center;gap:8px;font-size:13px}
+.acts{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
+.toast{position:fixed;bottom:max(16px,env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--accent);border-radius:var(--r);padding:8px 16px;font-family:var(--mono);font-size:12px;z-index:60;max-width:calc(100% - 32px)}
+/* timeline */
+.tl{position:relative;margin-left:8px;padding-left:24px;border-left:1px solid var(--line2);display:flex;flex-direction:column;gap:16px}
+.ev-i{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;min-width:0}
+.ev-i::before{content:"";position:absolute;left:-29px;top:18px;width:9px;height:9px;background:var(--bg);border:2px solid var(--accent);border-radius:50%}
+.ev-i .d{font-family:var(--mono);font-size:12px;color:var(--accent);margin-bottom:4px;overflow-wrap:anywhere}
+/* graph */
+.gbox{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);height:min(70vh,640px);min-height:380px;position:relative;overflow:hidden}
+.gbox svg{width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+.gbox text{font-family:var(--mono);font-size:10px;fill:var(--dim);pointer-events:none}
+.key{display:flex;flex-wrap:wrap;gap:8px 16px;font-family:var(--mono);font-size:11px;color:var(--dim);margin-bottom:12px}
+.key span{display:flex;align-items:center;gap:8px}
+.img{max-width:100%;max-height:280px;border-radius:var(--r);border:1px solid var(--line);display:block;object-fit:contain;background:var(--bg)}
+@media (max-width:860px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .side{position:fixed;inset:0 auto 0 0;width:min(300px,86vw);z-index:40;transform:translateX(-100%);transition:transform .2s}
+  body.nav .side{transform:none}
+  .burger{display:block}
+  .top{padding-left:16px}.wrap{padding-left:16px}
+  .crumb,.sync{display:none}
+  h1{font-size:18px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<div class="app">
+  <aside class="side" id="side" aria-label="Archive navigation"></aside>
+  <div class="main" id="main">
+    <div class="top">
+      <button class="burger" id="burger" aria-label="Open navigation">MENU</button>
+      <input class="search" id="q" type="search" placeholder="SEARCH THE ARCHIVE" autocomplete="off">
+      <span class="sync" id="sync">LOADING</span>
+      <span class="crumb" id="crumb"></span>
+    </div>
+    <div class="wrap" id="view"></div>
+  </div>
+</div>
+<div class="modal" id="modal" hidden><div class="dlg" id="dlg" role="dialog" aria-modal="true"></div></div>
+<script>
+"use strict";
+/* ---------- helpers ---------- */
+const $=(s,e=document)=>e.querySelector(s);
+const $$=(s,e=document)=>[...e.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const slug=s=>s.toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+const uid=()=>'r'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const fmtT=t=>{if(!t)return'';const d=new Date(t);return d.toISOString().slice(0,16).replace('T',' ')};
+const toast=m=>{const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)};
+
+/* ---------- status systems ---------- */
+const STATUS=[
+ ['NOT VISITED','nv','Autumn has not investigated it.'],
+ ['INVESTIGATING','inv','Investigation is ongoing.'],
+ ['INVESTIGATED','done','Current investigation is complete.'],
+ ['REVISIT','rev','New evidence warrants another visit.'],
+ ['INACCESSIBLE','no','Cannot currently be investigated.']];
+const CLASSES=[
+ ['Recovered','rec','Physically or digitally obtained.'],
+ ['Documented','doc','Recorded in an existing source.'],
+ ['Corroborated','cor','Supported by independent evidence.'],
+ ['Unverified','unv','Discovered but not independently confirmed.'],
+ ['Contradicted','con','Conflicts with another established record.'],
+ ['Missing','mis','Known to have existed but currently unavailable.'],
+ ['Interpretation','int','An explanation or hypothesis, not a confirmed fact.']];
+const sKey=n=>(STATUS.find(s=>s[0]===n)||STATUS[0])[1];
+const cKey=n=>(CLASSES.find(s=>s[0]===n)||CLASSES[3])[1];
+const sPill=n=>`<span class="pill" style="color:var(--s-${sKey(n)})">${esc(n)}</span>`;
+const cPill=n=>`<span class="pill sq" style="color:var(--c-${cKey(n)})">${esc(n)}</span>`;
+
+/* ---------- catalogue: structure from the archive outline, no story content ---------- */
+const CASES=[
+ ['Clara Voss',['Case Overview','Identity & Background','University Enrolment','Disappearance','Last Known Whereabouts','Personal Belongings','Library Records','Family Connections','Witness Accounts','Unresolved Questions']],
+ ['1951 Missing Student',['Case Overview','Identity','Enrolment & Academic History','Last Known Whereabouts','1951 Power Failure','Roommate & Associates','Missing Person Report','Newspaper Coverage','Witness Accounts','Unresolved Questions']],
+ ['Alistair Voss',['Case Overview','Institutional Identity','Faculty Appointment 1946','Restricted Personnel Record','Death Record','Donor & Bequest','Private Custodial Authority','Family History','Historical Appearances','Handwriting Comparisons','Unresolved Questions']],
+ ['BO-1947-016',['Equipment Overview','Manufacturing History','Acquisition - 12 Feb 1947','Initial Location - Lower Storage','Relocation - 3 Nov 1947','Component Inventory','Missing Component V-04-D','Weight Discrepancy','Technical Drawings','Structural Modifications','Photographic Evidence','Shipping & Transport','Unresolved Questions']],
+ ['Andrew & Clara',['Claim of Half-Sibling Relationship',"Andrew's Account","Clara's Family Background",'Parentage Records','Birth Records','Genealogical Comparisons','Supporting Evidence','Unresolved Questions']],
+ ['Phoebe',['Case Overview','Former Roommate','Former Dormitory','Sudden Transfer',"Rowena McIntyre's Approval","Ethan's Registrar Visit",'Claimed Sister','New Residence','Sorority Activities','Family Connections','Timeline of Events','Unresolved Questions']],
+ ['Remote Room',['Site Overview','Room Dimensions & Structure','Floor Evidence','Wall Evidence','Ceiling Evidence','Ventilation','Electrical Fixtures','Construction Materials','Footwear Impressions','Removed Equipment','Inventory Markings','Physical Samples','Possible Locations','Unresolved Questions']]];
+const LOCG={inside:'Inside University',row:'The Row',estate:'Blackstone Estate',away:'Away from Estate & Campus'};
+const LOCS=[
+ ['inside','Observatory Infrastructure',['Old Service Passage','Sublevel Access Corridor','Auxiliary Equipment Shed','Eastern Retaining Wall','Old Utility Courtyard','Electrical Substation','Former Photographic Laboratory','Old Communications Room']],
+ ['inside','University Records',["Restricted Archive Repository","Registrar's Records Office",'Student Newspaper Archive','University Infirmary','University Security Office','Central Library','Examination & Academic Records Office','Former Faculty Residence','Legal & Estate Administration Office']],
+ ['inside','Phoebe Transfer',["Autumn & Phoebe's Former Dormitory","Registrar's Office (Transfer)","Phoebe's New Residence",'Office of Student Affairs','Alumni Board Administrative Office','Campus Security & Residence Access']],
+ ['row','The Row',['Sorority Executive Room','Sorority Dressing Suite','Sorority Chapter House','Sorority Private Dining Room','Greek Syndicate Meeting Venue']],
+ ['estate','Estate Buildings',['Estate Gatehouse','Old Greenhouse','Carriage House','Underground Cellar','Main Manor House',"Old Servants' Quarters",'Private Library','Former Laboratory','Former Estate Records Office']],
+ ['estate','Family Records',['Private Family Archive','Estate Chapel','Family Mausoleum & Cemetery']],
+ ['estate','Estate Grounds',['Northern Woodland Outbuildings','Waterworks & Pumping Station','Eastern Boundary Lodge']],
+ ['away','Equipment & Transport',['Old Freight Depot','Blackstone Works','Former Railway Maintenance Yard','Historical Engineering Society']],
+ ['away','Family & Legal Records',['Municipal Civil Registry','County Courthouse & Probate Registry','Former Maternity Hospital','Old Parish Registry']],
+ ['away','Historical Investigations',['Local Newspaper Archive','Former Police Station','Regional Electrical Authority','Regional Hospital Records']],
+ ['away','Phoebe External Connections',["Phoebe's Family Residence","Family's Private Club","Phoebe's Regular Boutique"]],
+ ['away','Unverified Properties',['Former Voss-Associated Property']]];
+const EVK={
+ physical:['Physical Evidence',['Structural Evidence','Masonry & Brick Samples','Floor Impressions','Footwear Impressions','Metal Components','Adhesive & Label Fragments','Fibres & Textile Samples','Mineral Residue','Other Recovered Materials']],
+ documentary:['Documentary Evidence',['University Records','Estate Records','Manufacturing Registers','Shipping Manifests','Structural Orders','Technical Drawings','Correspondence','Legal Documents','Personal Documents']],
+ photographic:['Photographic Evidence',['Historical Photographs','Observatory Photographs','Construction Photographs','Missing Negatives','Current Site Photographs']],
+ audio:['Audio Evidence',['Recorded Conversations','Interviews','Historical Audio']],
+ digital:['Digital Evidence',['Scanned Documents','Digital Records','Archived Directories','Metadata']]};
+const EVS={remote:'Kidnapping Location',claraandrew:'Clara and Andrew',andrew:'Andrew',clara:'Clara',alistair:'Alistair',phoebe:'Phoebe',university:'Blackstone University',estate:'Blackstone Estate',row:'The Row',equipment:'Equipment BO-1947-016',s1951:'1951 Missing Student',general:'General / Unsorted'};
+const CASESUBJ={'case-clara-voss':'clara','case-1951-missing-student':'s1951','case-alistair-voss':'alistair','case-bo-1947-016':'equipment','case-andrew-and-clara':'claraandrew','case-phoebe':'phoebe','case-remote-room':'remote'};
+const subjId=e=>e.subj==='other'?'x-'+slug(e.subjx||'other'):(e.subj&&EVS[e.subj]?e.subj:'general');
+const subjName=e=>e.subj==='other'?(e.subjx||'Other'):(EVS[e.subj]||EVS.general);
+const TLS={master:'Master Chronology',clara:'Clara',s1951:'1951 Student',voss:'Voss',equipment:'Equipment',phoebe:'Phoebe',andrew:'Andrew'};
+const PEOPLEG={identified:'Identified Persons',unidentified:'Unidentified Persons',witnesses:'Witnesses',staff:'University Staff',estate:'Estate Personnel',family:'Family Members',associates:'Associates'};
+const PEOPLE0=[['identified',['Clara Voss','Alistair Voss','Andrew','Phoebe','Rowena McIntyre','Ethan']],['unidentified',['1951 Missing Student','Unidentified Custodian','Unknown Witnesses','Unidentified Personnel']]];
+const ARCHG={observatory:'Blackstone Observatory',estate:'Blackstone Estate',works:'Blackstone Works',university:'University'};
+const ARCH0=[['observatory',['Inventory BO-1947-016','Drawing A-04','Missing Drawing A-04-S2','Technical Sheet V-04-D','Photograph PH-47-016-C','1989 Transfer Inventory']],['estate',['Survey Book','Property Schedule','Structural Alteration Order 51-208','Family Records']],['works',['Manufacturing Register','Brick Batch 19XX-47','Delivery Records']],['university',["Clara's Student Record","Alistair's Faculty Record",'Restricted Correspondence','Historical Incident Records']]];
+const NOTEG={field:'Field Notes',logs:'Investigation Logs',questions:'Unanswered Questions',theories:'Working Theories',contradictions:'Contradictions',handwriting:'Handwriting Comparisons',maps:'Map Annotations',personal:'Personal Notes'};
+const MEDIAG={photos:'Photographs',scans:'Scanned Documents',maps:'Maps & Floorplans',audio:'Audio Recordings',video:'Video Recordings',reference:'Reference Images'};
+const TYPES={case:'Case',location:'Location',evidence:'Evidence',event:'Event',person:'Person',archive:'Archive',note:'Note',media:'Media'};
+const TCOL={case:'#e9a23b',location:'#5aa2e6',evidence:'#4fb477',event:'#d86bb4',person:'#9b8cf0',archive:'#3fc4b6',note:'#8a929d',media:'#c9a46a'};
+
+const BASE=new Map();
+CASES.forEach(([t,sec])=>BASE.set('case-'+slug(t),{id:'case-'+slug(t),type:'case',title:t,secDef:sec}));
+LOCS.forEach(([g,sg,arr])=>arr.forEach(t=>{const id='loc-'+slug(t);BASE.set(id,{id,type:'location',title:t,group:g,sub:sg})}));
+PEOPLE0.forEach(([g,arr])=>arr.forEach(t=>{const id='per-'+slug(t);BASE.set(id,{id,type:'person',title:t,group:g})}));
+ARCH0.forEach(([g,arr])=>arr.forEach(t=>{const id='arc-'+slug(t);BASE.set(id,{id,type:'archive',title:t,group:g})}));
+
+/* ---------- storage: shared db when available, otherwise this browser ---------- */
+const STORE=new Map(); let RECS=new Map(); let backend={mode:'local',db:null,q:{}};
+function build(){
+  RECS=new Map();
+  for(const b of BASE.values()) RECS.set(b.id,{status:'NOT VISITED',links:[],sections:{},...b});
+  for(const [id,d] of STORE){
+    if(d.deleted){RECS.delete(id);continue}
+    RECS.set(id,{status:'NOT VISITED',links:[],sections:{},...(BASE.get(id)||{}),...d,id});
+  }
+}
+function persist(id,obj){
+  if(backend.mode==='db'){
+    const run=()=>backend.db.doc('rec/'+id).set(obj).catch(e=>{toast('SAVE FAILED: '+(e&&e.code||'error'))});
+    backend.q[id]=(backend.q[id]||Promise.resolve()).then(run);
+  }else{
+    try{localStorage.setItem('blackstone-archive',JSON.stringify([...STORE]))}catch(e){}
+  }
+}
+function save(id,patch){
+  const b=BASE.get(id)||{}; const cur=STORE.get(id)||{};
+  const next={type:b.type,title:b.title,group:b.group,sub:b.sub,...cur,...patch,updated:Date.now()};
+  if(!next.created) next.created=Date.now();
+  Object.keys(next).forEach(k=>next[k]===undefined&&delete next[k]);
+  STORE.set(id,next); persist(id,next); build(); refresh();
+  return id;
+}
+function destroy(id){
+  if(BASE.has(id)){save(id,{deleted:true});return}
+  STORE.delete(id);
+  if(backend.mode==='db') backend.db.doc('rec/'+id).delete().catch(()=>{});
+  else persist(id,null);
+  build(); refresh();
+}
+async function initStore(){
+  let db=null; try{db=window.claude&&await window.claude.use('db')}catch(e){}
+  if(db){
+    backend={mode:'db',db,q:{}};
+    const timer=setTimeout(()=>{$('#sync').textContent='NOT REACHED YET'},10000);
+    db.collection('rec').limit(1000).onSnapshot(snap=>{
+      clearTimeout(timer); STORE.clear(); snap.docs.forEach(d=>STORE.set(d.id,d.data()));
+      $('#sync').textContent='SAVED TO ARCHIVE'; build(); refresh();
+    },e=>{clearTimeout(timer);$('#sync').textContent='READ ONLY'});
+  }else{
+    try{(JSON.parse(localStorage.getItem('blackstone-archive')||'[]')).forEach(([k,v])=>v&&STORE.set(k,v))}catch(e){}
+    $('#sync').textContent='THIS BROWSER ONLY'; build(); refresh();
+  }
+}
+
+/* ---------- links ---------- */
+const all=()=>[...RECS.values()];
+const ofType=t=>all().filter(r=>r.type===t);
+function nbrs(id){
+  const out=[],seen=new Set();
+  const r=RECS.get(id); if(!r)return out;
+  (r.links||[]).forEach(l=>{if(RECS.has(l.id)&&!seen.has(l.id)){seen.add(l.id);out.push({id:l.id,v:!!l.v,own:true})}});
+  for(const o of RECS.values()) if(o.id!==id) (o.links||[]).forEach(l=>{if(l.id===id&&!seen.has(o.id)){seen.add(o.id);out.push({id:o.id,v:!!l.v,own:false})}});
+  return out;
+}
+function addLink(a,b,v){const r=RECS.get(a);if(!r||a===b)return;save(a,{links:[...(r.links||[]).filter(l=>l.id!==b),{id:b,v:!!v}]})}
+function holder(a,b){const A=RECS.get(a);if((A.links||[]).some(l=>l.id===b))return[a,b];return[b,a]}
+function dropLink(a,b){const[h,t]=holder(a,b);save(h,{links:(RECS.get(h).links||[]).filter(l=>l.id!==t)})}
+function flipLink(a,b){const[h,t]=holder(a,b);save(h,{links:(RECS.get(h).links||[]).map(l=>l.id===t?{...l,v:!l.v}:l)})}
+</script>
+<script>
+/* ---------- ui state + navigation ---------- */
+const ui={route:'dashboard',open:new Set(['cases','locations']),locS:'all',evC:'all',q:'',gv:new Set(Object.keys(TYPES)),gUnv:true};
+const AREAS={
+ evidence:['Evidence',Object.entries(EVK).map(([k,v])=>[k,v[0]])],
+ timeline:['Timeline',Object.entries(TLS)],
+ people:['People',Object.entries(PEOPLEG)],
+ archives:['Archives',Object.entries(ARCHG)],
+ notes:['Notes',Object.entries(NOTEG)],
+ media:['Media',Object.entries(MEDIAG)]};
+const count=t=>ofType(t).length;
+function subjList(){const seen=new Set(),m=Object.entries(EVS).filter(x=>x[0]!=='general');m.forEach(x=>seen.add(x[0]));
+  ofType('evidence').forEach(e=>{if(e.subj==='other'){const i='x-'+slug(e.subjx||'other');if(!seen.has(i)){seen.add(i);m.push([i,e.subjx||'Other'])}}});
+  m.push(['general',EVS.general]);return m}
+function renderNav(){
+  const R=ui.route,cases=ofType('case');
+  const link=(h,l,o={})=>`<a class="gl ${('#'+R)===h?'on':''}" href="${h}" ${o.sc?`data-sc="${o.sc}"`:''}>${o.dot?`<i class="dot" style="background:${o.dot}"></i>`:''}<span>${esc(l)}</span></a>`;
+  const grp=(k,t,home,kids,n)=>`<div class="grp"><button class="gh" data-g="${k}" data-home="${home}" aria-expanded="${ui.open.has(k)}"><svg class="car" viewBox="0 0 10 10" width="10" height="10"><path d="M3 1l5 4-5 4" fill="none" stroke="currentColor" stroke-width="1.4"/></svg><span class="t">${esc(t)}</span>${n!=null?`<span class="n">${n}</span>`:''}</button>${kids?`<div class="kids" ${ui.open.has(k)?'':'hidden'}>${kids}</div>`:''}</div>`;
+  let h=`<div class="brand"><i>/</i>BLACKSTONE</div>`;
+  h+=grp('dashboard','Dashboard','dashboard',['overview|d-overview','progress|d-progress','recent discoveries|d-recent','unresolved|d-unres'].map(x=>{const[a,b]=x.split('|');return link('#dashboard',a,{sc:b})}).join(''));
+  h+=grp('cases','Active Investigations','cases',cases.map(c=>link('#rec-'+c.id,c.title,{dot:`var(--s-${sKey(c.status)})`})).join(''),cases.length);
+  h+=grp('locations','Locations','locations',Object.entries(LOCG).map(([k,v])=>link('#locations-'+k,v)).join(''),count('location'));
+  const car='<svg class="car" viewBox="0 0 10 10" width="10" height="10"><path d="M3 1l5 4-5 4" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>';
+  const evKids=()=>Object.entries(EVK).map(([kk,[kl]])=>`<button class="gh sub" data-g="ev-${kk}" data-home="evidence-${kk}" aria-expanded="${ui.open.has('ev-'+kk)}">${car}<span class="t">${esc(kl)}</span><span class="n">${ofType('evidence').filter(e=>e.kind===kk).length}</span></button><div class="kids" ${ui.open.has('ev-'+kk)?'':'hidden'}>${subjList().map(([i,n])=>link('#evidence-'+kk+'-'+i,n)).join('')}</div>`).join('');
+  const NC={evidence:count('evidence'),people:count('person'),archives:count('archive'),notes:count('note'),media:count('media'),timeline:count('event')};
+  for(const[k,[t,subs]]of Object.entries(AREAS)) h+=grp(k,t,k,k==='evidence'?evKids():subs.map(([s,l])=>link('#'+k+'-'+s,l)).join(''),NC[k]);
+  h+=grp('connections','Connections','connections','');
+  h+=grp('system','System','system',['location status|s-loc','evidence status|s-ev','case index|s-case','tags & categories|s-tags','backup & restore|s-backup'].map(x=>{const[a,b]=x.split('|');return link('#system',a,{sc:b})}).join(''));
+  $('#side').innerHTML=h;
+}
+$('#side').addEventListener('click',e=>{
+  const g=e.target.closest('.gh');
+  if(g){const k=g.dataset.g;ui.open.has(k)?ui.open.delete(k):ui.open.add(k);if(ui.route!==g.dataset.home)location.hash=g.dataset.home;else renderNav();return}
+  const a=e.target.closest('a.gl');
+  if(a){document.body.classList.remove('nav');if(a.dataset.sc){setTimeout(()=>{const t=document.getElementById(a.dataset.sc);t&&t.scrollIntoView({block:'start'})},30)}}
+});
+$('#burger').onclick=()=>document.body.classList.toggle('nav');
+$('#q').addEventListener('input',e=>{ui.q=e.target.value;if(ui.route!=='search'){ui.prev=ui.route;location.hash='search'}else renderView()});
+
+/* ---------- forms ---------- */
+function fieldHtml(f){
+  const id='f_'+f.k,v=f.val??'',full=['textarea','checks','file'].includes(f.type)?' style="grid-column:1/-1"':'';
+  let inp='';
+  if(f.type==='textarea') inp=`<textarea id="${id}" name="${f.k}" ${f.ph?`placeholder="${esc(f.ph)}"`:''}>${esc(v)}</textarea>`;
+  else if(f.type==='select'){
+    const opt=([a,b])=>`<option value="${esc(a)}" ${a===v?'selected':''}>${esc(b)}</option>`;
+    inp=`<select id="${id}" name="${f.k}">${f.opts.map(o=>o.g?`<optgroup label="${esc(o.g)}">${o.o.map(opt).join('')}</optgroup>`:opt(o)).join('')}</select>`;
+  }else if(f.type==='checks') inp=`<div class="checks" id="${id}">${f.opts.map(([a,b])=>`<label><input type="checkbox" value="${esc(a)}" ${(v||[]).includes(a)?'checked':''}>${esc(b)}</label>`).join('')}</div>`;
+  else if(f.type==='check') return `<div class="f"${full}><label class="checks"><input type="checkbox" id="${id}" ${v?'checked':''}>${esc(f.label)}</label></div>`;
+  else if(f.type==='file') inp=`<input id="${id}" type="file" accept="image/png,image/jpeg,image/gif,image/webp,video/mp4,video/webm,application/pdf">`;
+  else inp=`<input id="${id}" name="${f.k}" value="${esc(v)}" ${f.ph?`placeholder="${esc(f.ph)}"`:''} ${f.req?'required':''}>`;
+  return `<div class="f"${full}><label class="fl" for="${id}">${esc(f.label)}</label>${inp}${f.hint?`<span class="hint">${esc(f.hint)}</span>`:''}</div>`;
+}
+function openForm(o){
+  $('#dlg').innerHTML=`<h2>${esc(o.title)}</h2><form id="frm" style="display:flex;flex-direction:column;gap:16px"><div class="fg">${o.fields.map(fieldHtml).join('')}</div><div class="acts"><button type="button" class="btn" data-x="1">Cancel</button><button class="btn pri">${esc(o.submit||'Save')}</button></div></form>`;
+  $('#modal').hidden=false;
+  const frm=$('#frm');
+  setTimeout(()=>{const i=frm.querySelector('input:not([type=checkbox]),textarea,select');i&&i.focus()},20);
+  frm.onsubmit=async ev=>{
+    ev.preventDefault();const vals={};
+    o.fields.forEach(f=>{const el=document.getElementById('f_'+f.k);
+      vals[f.k]=f.type==='checks'?$$('input:checked',el).map(i=>i.value):f.type==='check'?el.checked:f.type==='file'?el.files[0]||null:el.value.trim()});
+    try{if(await o.onSubmit(vals)!==false)closeForm()}catch(e){toast('ERROR: '+(e&&e.message||e.code||'failed'))}
+  };
+}
+const closeForm=()=>{$('#modal').hidden=true;$('#dlg').innerHTML=''};
+$('#modal').addEventListener('click',e=>{if(e.target.id==='modal'||e.target.dataset.x)closeForm()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#modal').hidden)closeForm()});
+
+const statusOpts=STATUS.map(s=>[s[0],s[0]]);
+const classOpts=CLASSES.map(c=>[c[0],c[0]+' - '+c[2]]);
+const evSubOpts=Object.entries(EVK).map(([k,[l,subs]])=>({g:l,o:subs.map(s=>[k+'|'+s,s])}));
+const tagsIn=s=>s.split(',').map(x=>x.trim()).filter(Boolean);
+
+function recForm(type,rec,preset={}){
+  const r=rec||{},T=TYPES[type];
+  const F=[{k:'title',label:'Title',val:r.title,req:true}];
+  const gOpts=m=>Object.entries(m);
+  if(type==='case'||type==='location') F.push({k:'status',label:'Status',type:'select',opts:statusOpts,val:r.status||'NOT VISITED'});
+  if(type==='location'){F.push({k:'group',label:'Area',type:'select',opts:gOpts(LOCG),val:r.group||preset.group||'inside'});F.push({k:'sub',label:'Sub-area',val:r.sub,ph:'e.g. Observatory Infrastructure'})}
+  if(type==='evidence'){
+    F.push({k:'ref',label:'Evidence ID',val:r.ref||'',ph:'auto: E-'+String(count('evidence')+1).padStart(3,'0')});
+    F.push({k:'subj',label:'Subject folder',type:'select',opts:Object.entries(EVS).concat([['other','Other (name it below)']]),val:r.subj||preset.subj||'general'});
+    F.push({k:'subjx',label:'Custom folder name (only for Other)',val:r.subjx||preset.subjx||''});
+    F.push({k:'ks',label:'Category',type:'select',opts:evSubOpts,val:(r.kind||preset.kind||'physical')+'|'+(r.sub||preset.sub||EVK[r.kind||preset.kind||'physical'][1][0])});
+    F.push({k:'class',label:'Classification',type:'select',opts:classOpts,val:r.class||'Unverified'});
+    F.push({k:'date',label:'Date recovered',val:r.date,ph:'e.g. 2025-11-02'});
+    F.push({k:'source',label:'Source / discovery note',val:r.source,ph:'Where and how it was found'});
+  }
+  if(type==='event'){
+    F.push({k:'date',label:'Date',val:r.date,ph:'1951, 12 Feb 1947, 1951-03-14',req:true});
+    F.push({k:'class',label:'Classification',type:'select',opts:classOpts,val:r.class||'Documented'});
+    F.push({k:'tl',label:'Appears on timelines (always on the master)',type:'checks',opts:Object.entries(TLS).filter(x=>x[0]!=='master'),val:r.tl||(preset.tl&&preset.tl!=='master'?[preset.tl]:[])});
+  }
+  if(type==='person'){F.push({k:'group',label:'Group',type:'select',opts:gOpts(PEOPLEG),val:r.group||preset.group||'witnesses'})}
+  if(type==='archive'){F.push({k:'group',label:'Collection',type:'select',opts:gOpts(ARCHG),val:r.group||preset.group||'observatory'});F.push({k:'class',label:'Classification',type:'select',opts:classOpts,val:r.class||'Documented'})}
+  if(type==='note'){F.push({k:'group',label:'Notebook',type:'select',opts:gOpts(NOTEG),val:r.group||preset.group||'field'});F.push({k:'open',label:'Still open (shows under Unresolved)',type:'check',val:r.open??((r.group||preset.group)==='questions')})}
+  if(type==='media'){F.push({k:'group',label:'Folder',type:'select',opts:gOpts(MEDIAG),val:r.group||preset.group||'photos'});F.push({k:'file',label:'File (image, mp4, webm or pdf)',type:'file',hint:rec&&rec.asset?'Leave empty to keep the current file.':'Uploading needs edit access to this page.'})}
+  if(type==='person'){
+    [['known','Known information'],['unknown','Unknown information'],['affil','Affiliations'],['appear','Appearances'],['statements','Statements'],['rel','Relationships']].forEach(([k,l])=>F.push({k,label:l,type:'textarea',val:r[k]}));
+  }else F.push({k:'body',label:type==='case'?'Case overview':type==='media'?'Caption':'Description / notes',type:'textarea',val:r.body});
+  if(type==='evidence') F.push({k:'critical',label:'Mark as critical evidence',type:'check',val:r.critical});
+  F.push({k:'tags',label:'Tags (comma separated)',val:(r.tags||[]).join(', ')});
+  openForm({title:(rec?'Edit ':'New ')+T,fields:F,submit:rec?'Save':'Create',onSubmit:async v=>{
+    const id=rec?rec.id:uid();
+    const p={type,title:v.title,tags:tagsIn(v.tags)};
+    ['status','group','sub','class','date','source','ref','body','known','unknown','affil','appear','statements','rel'].forEach(k=>{if(k in v)p[k]=v[k]});
+    if('open' in v)p.open=v.open; if('critical' in v)p.critical=v.critical; if('tl' in v)p.tl=v.tl;
+    if(type==='evidence'){p.subj=v.subj;p.subjx=v.subjx;const[k,s]=v.ks.split('|');p.kind=k;p.sub=s;if(!p.ref)p.ref='E-'+String(count('evidence')+1).padStart(3,'0')}
+    if(type==='media'&&v.file){
+      const as=window.claude&&await window.claude.use('assets');
+      if(!as){toast('UPLOAD NEEDS EDIT ACCESS');return false}
+      const up=await as.upload(v.file);p.asset=up.id;p.mtype=up.contentType;p.fname=v.file.name;
+    }
+    if(!rec&&preset.link) p.links=[{id:preset.link,v:true}];
+    save(id,p);
+    if(!rec) location.hash='rec-'+id;
+  }});
+}
+function linkForm(id){
+  const me=RECS.get(id),have=new Set(nbrs(id).map(n=>n.id));
+  const opts=Object.keys(TYPES).map(t=>({g:TYPES[t],o:ofType(t).filter(x=>x.id!==id&&!have.has(x.id)).sort((a,b)=>a.title.localeCompare(b.title)).map(x=>[x.id,x.title])})).filter(g=>g.o.length);
+  if(!opts.length){toast('NOTHING LEFT TO LINK');return}
+  openForm({title:'Link a record to '+me.title,submit:'Link',fields:[
+    {k:'to',label:'Record',type:'select',opts,val:opts[0].o[0][0]},
+    {k:'v',label:'Confirmed by evidence (leave off for an unverified link)',type:'check',val:false}],
+    onSubmit:v=>{addLink(id,v.to,v.v);toast(v.v?'LINK CONFIRMED':'LINK MARKED UNVERIFIED')}});
+}
+function sectionForm(id,name){
+  const r=RECS.get(id);
+  openForm({title:name,submit:'Save',fields:[{k:'t',label:name,type:'textarea',val:(r.sections||{})[name]}],
+    onSubmit:v=>{save(id,{sections:{...(r.sections||{}),[name]:v.t}})}});
+}
+</script>
+<script>
+/* ---------- components ---------- */
+const gLabel=r=>{
+  if(r.type==='location')return[LOCG[r.group],r.sub].filter(Boolean).join(' / ');
+  if(r.type==='person')return PEOPLEG[r.group]||'';
+  if(r.type==='archive')return ARCHG[r.group]||'';
+  if(r.type==='note')return NOTEG[r.group]||'';
+  if(r.type==='media')return MEDIAG[r.group]||'';
+  if(r.type==='evidence')return[(EVK[r.kind]||[])[0],r.sub].filter(Boolean).join(' / ');
+  if(r.type==='event')return r.date||'';
+  return TYPES[r.type];
+};
+const pillOf=r=>r.type==='case'||r.type==='location'?sPill(r.status):r.class?cPill(r.class):'';
+const head=(eb,t,lead,act)=>`<div class="ph"><div><div class="eyebrow">${esc(eb)}</div><h1>${esc(t)}</h1>${lead?`<p class="lead">${esc(lead)}</p>`:''}</div><div class="row">${act||''}</div></div>`;
+const addBtn=(type,label,preset)=>`<button class="btn pri" data-act="new" data-type="${type}" data-preset='${esc(JSON.stringify(preset||{}))}'>+ ${esc(label)}</button>`;
+const empty=(m,btn)=>`<div class="empty">${esc(m)}${btn?`<div style="margin-top:16px">${btn}</div>`:''}</div>`;
+function card(r){
+  const n=nbrs(r.id),ev=n.filter(x=>RECS.get(x.id).type==='evidence').length;
+  const meta=r.type==='evidence'?[r.ref,/^evidence-[a-z]+-/.test(ui.route)?'':subjName(r),gLabel(r)].filter(Boolean).join(' · '):gLabel(r);
+  return `<a class="card" href="#rec-${r.id}"><span class="m">${esc(meta)}</span><span class="t">${esc(r.title)}</span>${r.body?`<span class="b">${esc(r.body)}</span>`:''}<span class="row" style="margin-top:auto">${pillOf(r)}${r.critical?'<span class="tag" style="color:var(--accent)">CRITICAL</span>':''}<span class="m" style="margin-left:auto">${n.length} link${n.length===1?'':'s'}${r.type!=='evidence'&&ev?' · '+ev+' ev.':''}</span></span></a>`;
+}
+const li=r=>`<a class="li" href="#rec-${r.id}"><div class="tx"><b>${esc(r.title)}</b><span>${esc(TYPES[r.type])}${gLabel(r)&&r.type!=='case'?' · '+esc(gLabel(r)):''}</span></div>${pillOf(r)}</a>`;
+const section=(id,t,body,act)=>`<section class="sec" ${id?`id="${id}"`:''}><div class="sh"><h2>${esc(t)}</h2>${act||''}</div>${body}</section>`;
+const byNew=(a,b)=>(b.created||0)-(a.created||0);
+const sortKey=s=>{const m=String(s||'').match(/\b(\d{4})\b/);if(!m)return 9e15;const y=+m[1],t=Date.parse(s);return !isNaN(t)&&new Date(t).getFullYear()===y?t:Date.UTC(y,0,1)};
+function bar(items){const tot=items.reduce((a,b)=>a+b[1],0)||1;return `<div class="bar">${items.map(([l,n,c])=>n?`<i style="width:${n/tot*100}%;background:${c}" title="${esc(l)}"></i>`:'').join('')}</div>`}
+
+/* ---------- dashboard ---------- */
+function dashboard(){
+  const locs=ofType('location'),cases=ofType('case'),evs=ofType('evidence');
+  const links=all().reduce((a,r)=>a+(r.links||[]).length,0),conf=all().reduce((a,r)=>a+(r.links||[]).filter(l=>l.v).length,0);
+  const st=(n,v,h)=>`<${h?`a href="${h}"`:'div'} class="card stat"><span class="big">${v}</span><span class="m">${n}</span></${h?'a':'div'}>`;
+  let h=head('Archive system','Overview','Investigation progress and the newest findings, without opening a folder.');
+  h+=`<div class="stats" id="d-overview">${st('Cases',cases.length,'#cases')}${st('Locations',locs.length,'#locations')}${st('Evidence records',evs.length,'#evidence')}${st('Timeline events',count('event'),'#timeline')}${st('People',count('person'),'#people')}${st('Links',links+' ('+conf+' confirmed)','#connections')}</div>`;
+  const cnt=STATUS.map(s=>[s[0],locs.filter(l=>l.status===s[0]).length,`var(--s-${s[1]})`]);
+  h+=section('d-progress','Investigation progress',`<div class="block"><div class="m" style="font-family:var(--mono);font-size:12px;color:var(--dim)">${cnt[2][1]} of ${locs.length} locations investigated</div>${bar(cnt)}<div class="legend">${cnt.map(c=>`<span><i class="dot" style="width:8px;height:8px;border-radius:50%;background:${c[2]};flex:none"></i>${c[0]}<b>${c[1]}</b></span>`).join('')}</div></div>`);
+  const recent=evs.slice().sort(byNew).slice(0,6);
+  const unres=ofType('note').filter(n=>n.open).sort(byNew).slice(0,8);
+  h+=`<div class="two"><div>${section('d-recent','Recent discoveries',recent.length?`<div class="list">${recent.map(li).join('')}</div>`:empty('No evidence logged yet.',addBtn('evidence','Log evidence')))}</div>
+  <div>${section('d-unres','Unresolved questions',unres.length?`<div class="list">${unres.map(li).join('')}</div>`:empty('No open questions. Add a note and mark it as still open.',addBtn('note','Add question',{group:'questions'})))}</div></div>`;
+  const crit=evs.filter(e=>e.critical);
+  h+=section('d-crit','Critical evidence',crit.length?`<div class="grid">${crit.map(card).join('')}</div>`:empty('Mark an evidence record as critical to pin it here.'));
+  const wait=locs.filter(l=>l.status==='NOT VISITED'||l.status==='REVISIT');
+  const rev=wait.filter(l=>l.status==='REVISIT');
+  const waitShow=[...rev,...wait.filter(l=>l.status!=='REVISIT')].slice(0,10);
+  h+=section('d-wait','Locations awaiting investigation',`<div class="list">${waitShow.map(li).join('')||''}</div>${wait.length>10?`<p class="m" style="margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--faint)">${wait.length-10} more in <a href="#locations" style="color:var(--accent)">Locations</a></p>`:''}`);
+  h+=section('d-act','Active investigations',`<div class="grid">${cases.map(card).join('')}</div>`,`<button class="btn sm" data-act="new" data-type="case" data-preset="{}">+ Case</button>`);
+  const act=all().filter(r=>r.updated).sort((a,b)=>b.updated-a.updated).slice(0,10);
+  h+=section('d-log','Activity log',act.length?`<div class="list">${act.map(r=>`<a class="li" href="#rec-${r.id}"><div class="tx"><b>${esc(r.title)}</b><span>${esc(TYPES[r.type])} updated</span></div><span class="m" style="font-family:var(--mono);font-size:11px;color:var(--faint)">${fmtT(r.updated)}</span></a>`).join('')}</div>`:empty('Changes you make appear here.'));
+  h+=`<div class="notice"><b>ARCHIVE NOTICE</b>One or more historical records may be incomplete. Cross-reference before accepting any conclusion.</div>`;
+  return h;
+}
+function casesView(){
+  const cs=ofType('case');
+  return head('Investigations','Active investigations','Each mystery has its own file. Cases stay independent until evidence supports a connection.',addBtn('case','New case'))+`<div class="grid w">${cs.map(card).join('')}</div>`;
+}
+function locationsView(g){
+  let ls=ofType('location').filter(l=>!g||l.group===g);
+  const shown=ls.filter(l=>ui.locS==='all'||l.status===ui.locS);
+  const chips=`<div class="chips"><button class="chip ${ui.locS==='all'?'on':''}" data-act="locS" data-v="all">All ${ls.length}</button>${STATUS.map(s=>`<button class="chip ${ui.locS===s[0]?'on':''}" data-act="locS" data-v="${s[0]}">${s[0]} ${ls.filter(l=>l.status===s[0]).length}</button>`).join('')}</div>`;
+  const subs=[...new Set(shown.map(l=>(g?'':LOCG[l.group]+' / ')+(l.sub||'Other')))];
+  let h=head('Locations',g?LOCG[g]:'All locations',"Autumn's physical investigation. Open a location to see its status, clues and linked cases.",addBtn('location','New location',{group:g||'inside'}))+chips;
+  h+=subs.map(s=>`<section class="sec"><div class="sh"><h2>${esc(s)}</h2></div><div class="grid">${shown.filter(l=>(g?'':LOCG[l.group]+' / ')+(l.sub||'Other')===s).map(card).join('')}</div></section>`).join('')||empty('No locations with this status.');
+  return h;
+}
+
+/* ---------- record page ---------- */
+function recordView(id){
+  const r=RECS.get(id);
+  if(!r)return head('Not found','Record not found','It may have been deleted.')+`<a class="btn" href="#dashboard">Back to dashboard</a>`;
+  const n=nbrs(id);
+  const acts=`<button class="btn" data-act="edit" data-id="${id}">Edit</button>${r.type==='location'||r.type==='case'?`<button class="btn pri" data-act="new" data-type="evidence" data-preset='${esc(JSON.stringify({link:id,subj:r.type==='case'?CASESUBJ[id]:undefined}))}'>+ Log clue here</button>`:''}<button class="btn danger" data-act="del" data-id="${id}">Delete</button>`;
+  let h=head(TYPES[r.type]+(gLabel(r)&&r.type!=='case'&&r.type!=='event'?' / '+gLabel(r):''),r.title,'',acts);
+  h+=`<div class="row" style="margin-bottom:24px">${pillOf(r)}${r.critical?'<span class="tag" style="color:var(--accent)">CRITICAL</span>':''}${(r.tags||[]).map(t=>`<a class="tag" href="#search" data-tag="${esc(t)}">#${esc(t)}</a>`).join('')}</div>`;
+  if(r.type==='case'||r.type==='location'){
+    h+=`<div class="block"><div class="sh"><h2>Status</h2></div><div class="chips" style="margin:0">${STATUS.map(s=>`<button class="chip ${r.status===s[0]?'on':''}" data-act="setst" data-id="${id}" data-v="${s[0]}" title="${esc(s[2])}">${s[0]}</button>`).join('')}</div></div>`;
+  }
+  const kv=[];
+  if(r.type==='evidence')kv.push(['Evidence ID',r.ref],['Folder',subjName(r)],['Category',gLabel(r)],['Date recovered',r.date],['Source',r.source]);
+  if(r.type==='event')kv.push(['Date',r.date],['Timelines',['Master',...(r.tl||[]).map(k=>TLS[k])].join(', ')]);
+  if(kv.length)h+=`<div class="kv">${kv.map(([a,b])=>`<div><label>${a}</label><span>${b?esc(b):'<i style="color:var(--faint)">not recorded</i>'}</span></div>`).join('')}</div>`;
+  if(r.type==='media'&&r.asset){
+    const u='/_blob/'+r.asset;
+    h+=`<div class="block">${(r.mtype||'').startsWith('image')?`<img class="img" src="${u}" alt="${esc(r.title)}">`:(r.mtype||'').startsWith('video')?`<video class="img" src="${u}" controls></video>`:`<a class="btn" href="${u}" target="_blank" rel="noopener">Open ${esc(r.fname||'file')}</a>`}</div>`;
+  }
+  const blk=(t,x,btn)=>`<div class="block"><div class="sh"><h2>${esc(t)}</h2>${btn||''}</div><div class="text ${x?'':'none'}">${x?esc(x):'Nothing recorded yet.'}</div></div>`;
+  if(r.type==='person')h+=[['Known information','known'],['Unknown information','unknown'],['Affiliations','affil'],['Appearances','appear'],['Statements','statements'],['Relationships','rel']].map(([t,k])=>blk(t,r[k])).join('');
+  else h+=blk(r.type==='case'?'Case overview':r.type==='media'?'Caption':'Notes',r.body);
+  if(r.type==='case'){
+    h+=`<div class="sec"><div class="sh"><h2>Case file</h2></div>`+(r.secDef||[]).filter(s=>!/overview/i.test(s)).map(s=>blk(s,(r.sections||{})[s],`<button class="btn sm" data-act="sec" data-id="${id}" data-name="${esc(s)}">Edit</button>`)).join('')+`</div>`;
+  }
+  const order=['evidence','event','person','location','case','archive','note','media'];
+  const LN={evidence:'Evidence',event:'Chronology',person:'People',location:'Locations',case:'Cases',archive:'Archives',note:'Notes',media:'Media'};
+  h+=`<div class="sec"><div class="sh"><h2>Cross-references</h2><button class="btn sm" data-act="link" data-id="${id}">+ Link record</button></div>`;
+  const rows=order.map(t=>{
+    const g=n.filter(x=>RECS.get(x.id).type===t).sort((a,b)=>RECS.get(a.id).title.localeCompare(RECS.get(b.id).title));
+    if(!g.length)return'';
+    return `<div class="block"><div class="sh"><h2>${LN[t]} (${g.length})</h2></div>${g.map(x=>{const o=RECS.get(x.id);
+      return `<div class="lk"><a href="#rec-${o.id}">${esc(o.title)}</a>${t==='evidence'&&o.class?cPill(o.class):''}<button class="pill ${x.v?'':'unv'}" style="background:none;cursor:pointer;${x.v?'color:var(--s-done)':'border-style:dashed'}" data-act="flip" data-a="${id}" data-b="${o.id}" title="Click to switch between confirmed and unverified">${x.v?'confirmed':'unverified'}</button><button class="btn sm danger" data-act="unlink" data-a="${id}" data-b="${o.id}" aria-label="Remove link">x</button></div>`}).join('')}</div>`}).join('');
+  h+=(rows||empty('Nothing linked yet. Link evidence, locations, people or cases to cross-reference them.'))+`</div>`;
+  return h;
+}
+
+/* ---------- area views ---------- */
+function evidenceView(sub){
+  const parts=(sub||'').split('-'),kk=parts[0],sid=parts.slice(1).join('-')||null;
+  if(!EVK[kk])return evidenceViewOld(sub);
+  const found=sid&&subjList().find(x=>x[0]===sid),sname=found?found[1]:'Folder';
+  const preset={kind:kk};if(sid){if(sid.startsWith('x-')){preset.subj='other';preset.subjx=sname}else preset.subj=sid}
+  const evs=ofType('evidence').filter(e=>e.kind===kk&&(!sid||subjId(e)===sid)&&(ui.evC==='all'||e.class===ui.evC));
+  const chips=`<div class="chips"><button class="chip ${ui.evC==='all'?'on':''}" data-act="evC" data-v="all">All</button>${CLASSES.map(c=>`<button class="chip ${ui.evC===c[0]?'on':''}" data-act="evC" data-v="${c[0]}" title="${esc(c[2])}">${c[0]}</button>`).join('')}</div>`;
+  const cnt=x=>`<span class="m" style="font-family:var(--mono);font-size:11px;color:var(--faint)">${x}</span>`;
+  const grid=x=>`<div class="grid">${x.sort(byNew).map(card).join('')}</div>`;
+  let h=head(EVK[kk][0],sid?sname:'All subjects',sid?'Clues of this type found for this subject, sorted by category.':'Open a subject folder in the sidebar, or browse every subject here.',addBtn('evidence','Log evidence',preset))+chips;
+  let secs='';
+  if(sid){
+    EVK[kk][1].forEach(c=>{const x=evs.filter(e=>e.sub===c);if(x.length)secs+=`<section class="sec"><div class="sh"><h2>${esc(c)}</h2>${cnt(x.length)}</div>${grid(x)}</section>`});
+  }else{
+    subjList().forEach(([i,n])=>{const x=evs.filter(e=>subjId(e)===i);if(x.length)secs+=`<section class="sec"><div class="sh"><h2><a href="#evidence-${kk}-${i}">${esc(n)}</a></h2>${cnt(x.length)}</div>${grid(x)}</section>`});
+  }
+  return h+(secs||empty(ui.evC==='all'?'No evidence here yet.':'No evidence with this classification.',addBtn('evidence','Log evidence',preset)));
+}
+function evidenceViewOld(sub){
+  const kinds=sub&&EVK[sub]?[sub]:Object.keys(EVK);
+  let evs=ofType('evidence').filter(e=>kinds.includes(e.kind)&&(ui.evC==='all'||e.class===ui.evC));
+  const chips=`<div class="chips"><button class="chip ${ui.evC==='all'?'on':''}" data-act="evC" data-v="all">All</button>${CLASSES.map(c=>`<button class="chip ${ui.evC===c[0]?'on':''}" data-act="evC" data-v="${c[0]}" title="${esc(c[2])}">${c[0]}</button>`).join('')}</div>`;
+  let h=head('Central repository',sub&&EVK[sub]?EVK[sub][0]:'Evidence','Every clue is stored once and linked to the locations, cases and people it belongs to.',addBtn('evidence','Log evidence',sub&&EVK[sub]?{kind:sub}:{}))+chips;
+  const groups=[];kinds.forEach(k=>EVK[k][1].forEach(s=>{const x=evs.filter(e=>e.kind===k&&e.sub===s);if(x.length)groups.push([EVK[k][0]+' / '+s,x])}));
+  h+=groups.map(([t,x])=>`<section class="sec"><div class="sh"><h2>${esc(t)}</h2><span class="m" style="font-family:var(--mono);font-size:11px;color:var(--faint)">${x.length}</span></div><div class="grid">${x.sort(byNew).map(card).join('')}</div></section>`).join('')||empty(ui.evC==='all'?'No evidence logged here yet.':'No evidence with this classification.');
+  return h;
+}
+function timelineView(k){
+  k=TLS[k]?k:'master';
+  let ev=ofType('event').filter(e=>k==='master'||(e.tl||[]).includes(k)).sort((a,b)=>sortKey(a.date)-sortKey(b.date));
+  let h=head('Chronology',TLS[k]+(k==='master'?'':' timeline'),'Separate timelines keep unrelated events from merging too early. The master chronology shows everything.',addBtn('event','Add event',{tl:k}));
+  h+=`<div class="chips">${Object.entries(TLS).map(([a,b])=>`<a class="chip ${a===k?'on':''}" href="#timeline-${a}">${esc(b)}</a>`).join('')}</div>`;
+  h+=ev.length?`<div class="tl">${ev.map(e=>{const n=nbrs(e.id).slice(0,6);return `<a class="ev-i" href="#rec-${e.id}" style="display:block"><div class="d">${esc(e.date)}</div><div class="t" style="font-weight:500;overflow-wrap:anywhere">${esc(e.title)}</div>${e.body?`<div class="b" style="color:var(--dim);font-size:13px;margin-top:4px;overflow-wrap:anywhere">${esc(e.body.slice(0,200))}</div>`:''}<div class="row" style="margin-top:8px">${e.class?cPill(e.class):''}${n.map(x=>`<span class="tag">${esc(RECS.get(x.id).title.slice(0,28))}</span>`).join('')}</div></a>`}).join('')}</div>`:empty('No events on this timeline yet.',addBtn('event','Add event',{tl:k}));
+  return h;
+}
+function groupedView(area,type,gmap,sub,t,lead,label){
+  const keys=sub&&gmap[sub]?[sub]:Object.keys(gmap);
+  const rs=ofType(type);
+  let h=head(AREAS[area][0],sub&&gmap[sub]?gmap[sub]:t,lead,addBtn(type,label,sub&&gmap[sub]?{group:sub}:{}));
+  const secs=keys.map(k=>{const x=rs.filter(r=>r.group===k).sort((a,b)=>a.title.localeCompare(b.title));return x.length?`<section class="sec"><div class="sh"><h2>${esc(gmap[k])}</h2><span class="m" style="font-family:var(--mono);font-size:11px;color:var(--faint)">${x.length}</span></div><div class="grid">${x.map(card).join('')}</div></section>`:''}).join('');
+  return h+(secs||empty('Nothing here yet.',addBtn(type,label,sub&&gmap[sub]?{group:sub}:{})));
+}
+function searchView(){
+  const q=ui.q.trim().toLowerCase();
+  const hit=q?all().filter(r=>[r.title,r.body,r.known,r.unknown,r.affil,r.source,r.ref,(r.tags||[]).join(' '),Object.values(r.sections||{}).join(' ')].join(' ').toLowerCase().includes(q)):[];
+  return head('Search',q?`Results for "${ui.q.trim()}"`:'Search the archive','Searches titles, notes, case files, tags and evidence IDs.')+(hit.length?`<div class="list">${hit.slice(0,100).map(li).join('')}</div>`:empty(q?'Nothing matches.':'Type in the search box above.'));
+}
+
+/* ---------- click handling ---------- */
+$('#view').addEventListener('click',e=>{
+  const t=e.target.closest('[data-act],[data-tag]');if(!t)return;
+  if(t.dataset.tag){ui.q=t.dataset.tag;$('#q').value=ui.q;return}
+  const a=t.dataset.act,d=t.dataset;
+  if(a==='new')recForm(d.type,null,JSON.parse(d.preset||'{}'));
+  else if(a==='edit')recForm(RECS.get(d.id).type,RECS.get(d.id));
+  else if(a==='del'){if(t.dataset.armed){destroy(d.id);location.hash='dashboard'}else{t.dataset.armed='1';t.textContent='Click again to delete'}}
+  else if(a==='link')linkForm(d.id);
+  else if(a==='unlink')dropLink(d.a,d.b);
+  else if(a==='flip')flipLink(d.a,d.b);
+  else if(a==='sec')sectionForm(d.id,d.name);
+  else if(a==='setst')save(d.id,{status:d.v});
+  else if(a==='locS'){ui.locS=d.v;renderView()}
+  else if(a==='evC'){ui.evC=d.v;renderView()}
+  else if(typeof sysAct==='function')sysAct(a,t);
+});
+</script>
+<script>
+/* ---------- connections graph ---------- */
+function connectionsView(){
+  const vis=ui.gv,edges=[],deg={};
+  for(const r of RECS.values()) (r.links||[]).forEach(l=>{const o=RECS.get(l.id);if(o&&vis.has(r.type)&&vis.has(o.type)&&(ui.gUnv||l.v)){edges.push({a:r.id,b:o.id,v:!!l.v});deg[r.id]=(deg[r.id]||0)+1;deg[o.id]=(deg[o.id]||0)+1}});
+  const nodes=Object.keys(deg).map(id=>({id,r:RECS.get(id)}));
+  const conf=edges.filter(e=>e.v).length;
+  let h=head('Network','Connections','Cases, people, places and evidence as one graph. Dashed amber lines are unverified; solid lines are confirmed.');
+  h+=`<div class="chips">${Object.entries(TYPES).map(([k,v])=>`<button class="chip ${vis.has(k)?'on':''}" data-act="gt" data-v="${k}"><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${TCOL[k]};margin-right:6px"></i>${v}</button>`).join('')}<button class="chip ${ui.gUnv?'on':''}" data-act="gu">Show unverified</button></div>`;
+  h+=`<div class="key"><span><svg width="28" height="8"><line x1="0" y1="4" x2="28" y2="4" stroke="#aab3bf" stroke-width="1.6"/></svg>Confirmed (${conf})</span><span><svg width="28" height="8"><line x1="0" y1="4" x2="28" y2="4" stroke="#e9a23b" stroke-width="1.6" stroke-dasharray="4 3"/></svg>Unverified (${edges.length-conf})</span></div>`;
+  if(!nodes.length)return h+empty('No connections yet. Open any record and use "Link record" to create the first one.');
+  const W=1000,H=640,N=nodes.length,ix={};
+  nodes.forEach((n,i)=>{ix[n.id]=n;const a=i/N*6.283,r=100+(i%7)*25;n.x=W/2+Math.cos(a)*r;n.y=H/2+Math.sin(a)*r;n.vx=0;n.vy=0});
+  for(let it=0;it<280;it++){
+    for(let i=0;i<N;i++)for(let j=i+1;j<N;j++){const A=nodes[i],B=nodes[j];let dx=A.x-B.x,dy=A.y-B.y,d2=Math.max(dx*dx+dy*dy,36),d=Math.sqrt(d2),f=2600/d2;dx/=d;dy/=d;A.vx+=dx*f;A.vy+=dy*f;B.vx-=dx*f;B.vy-=dy*f}
+    edges.forEach(e=>{const A=ix[e.a],B=ix[e.b];let dx=B.x-A.x,dy=B.y-A.y,d=Math.sqrt(dx*dx+dy*dy)||1,f=(d-95)*.03;dx/=d;dy/=d;A.vx+=dx*f;A.vy+=dy*f;B.vx-=dx*f;B.vy-=dy*f});
+    nodes.forEach(n=>{n.vx+=(W/2-n.x)*.004;n.vy+=(H/2-n.y)*.004;n.x+=n.vx*.5;n.y+=n.vy*.5;n.vx*=.78;n.vy*=.78});
+  }
+  const xs=nodes.map(n=>n.x),ys=nodes.map(n=>n.y),pad=70;
+  const x0=Math.min(...xs)-pad,y0=Math.min(...ys)-pad,w=Math.max(...xs)-Math.min(...xs)+pad*2,hh=Math.max(...ys)-Math.min(...ys)+pad*2;
+  const svg=`<svg viewBox="${x0} ${y0} ${Math.max(w,300)} ${Math.max(hh,200)}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Network graph of linked records">`+
+    edges.map(e=>{const A=ix[e.a],B=ix[e.b];return `<line x1="${A.x.toFixed(1)}" y1="${A.y.toFixed(1)}" x2="${B.x.toFixed(1)}" y2="${B.y.toFixed(1)}" stroke="${e.v?'#aab3bf':'#e9a23b'}" stroke-width="${e.v?1.6:1.4}" ${e.v?'':'stroke-dasharray="5 4"'} opacity="${e.v?.8:.9}"/>`}).join('')+
+    nodes.map(n=>{const rad=6+Math.min(deg[n.id],8)*1.3,t=n.r.title,lb=t.length>22?t.slice(0,21)+'…':t;
+      return `<a href="#rec-${n.id}"><circle cx="${n.x.toFixed(1)}" cy="${n.y.toFixed(1)}" r="${rad}" fill="${TCOL[n.r.type]}" stroke="#0a0b0d" stroke-width="2"><title>${esc(TYPES[n.r.type]+': '+t)}</title></circle><text x="${n.x.toFixed(1)}" y="${(n.y+rad+12).toFixed(1)}" text-anchor="middle">${esc(lb)}</text></a>`}).join('')+`</svg>`;
+  return h+`<div class="gbox">${svg}</div>`;
+}
+
+/* ---------- system ---------- */
+function systemView(){
+  const locs=ofType('location'),evs=ofType('evidence'),cases=ofType('case');
+  let h=head('System','System','Registers, tags and backup.');
+  h+=`<div class="two">`;
+  h+=`<div>${section('s-loc','Location status register',`<div class="list">${STATUS.map(s=>`<div class="li"><div class="tx"><b>${s[0]}</b><span>${esc(s[2])}</span></div>${sPill(s[0])}<span class="m" style="font-family:var(--mono)">${locs.filter(l=>l.status===s[0]).length}</span></div>`).join('')}</div>`)}</div>`;
+  h+=`<div>${section('s-ev','Evidence status register',`<div class="list">${CLASSES.map(c=>`<div class="li"><div class="tx"><b>${c[0]}</b><span>${esc(c[2])}</span></div><span class="m" style="font-family:var(--mono)">${evs.filter(e=>e.class===c[0]).length}</span></div>`).join('')}</div>`)}</div></div>`;
+  h+=section('s-case','Case index',`<div class="list">${cases.map(li).join('')}</div>`);
+  const tg={};all().forEach(r=>(r.tags||[]).forEach(t=>tg[t]=(tg[t]||0)+1));
+  h+=section('s-tags','Tags & categories',Object.keys(tg).length?`<div class="chips">${Object.entries(tg).sort().map(([t,n])=>`<a class="chip" href="#search" data-tag="${esc(t)}">#${esc(t)} ${n}</a>`).join('')}</div>`:empty('No tags yet. Add comma separated tags when you edit a record.'));
+  h+=section('s-backup','Backup & restore',`<div class="block"><p class="lead" style="margin:0 0 16px">Storage: ${backend.mode==='db'?'saved with this page, shared with everyone who can edit it.':'this browser only. Export a backup now and then.'}</p><div class="row"><button class="btn" data-act="export">Export backup (.json)</button><button class="btn" data-act="import">Restore from backup</button></div></div>`);
+  const rv=all().filter(r=>r.updated).sort((a,b)=>b.updated-a.updated).slice(0,15);
+  h+=section('s-rev','Revision history',rv.length?`<div class="list">${rv.map(r=>`<a class="li" href="#rec-${r.id}"><div class="tx"><b>${esc(r.title)}</b><span>${TYPES[r.type]}</span></div><span class="m" style="font-family:var(--mono);font-size:11px;color:var(--faint)">${fmtT(r.updated)}</span></a>`).join('')}</div>`:empty('No changes yet.'));
+  return h;
+}
+async function sysAct(a,t){
+  if(a==='gt'){const v=t.dataset.v;ui.gv.has(v)?ui.gv.delete(v):ui.gv.add(v);renderView()}
+  else if(a==='gu'){ui.gUnv=!ui.gUnv;renderView()}
+  else if(a==='export'){
+    const data=JSON.stringify([...STORE],null,1);
+    const dl=window.claude&&await window.claude.use('downloads').catch(()=>null);
+    if(dl){try{await dl.save({filename:'blackstone-archive-'+new Date().toISOString().slice(0,10)+'.json',data});return}catch(e){if(e&&e.code==='declined')return}}
+    openForm({title:'Backup data',submit:'Close',fields:[{k:'d',label:'Copy and keep this text',type:'textarea',val:data}],onSubmit:()=>true});
+  }else if(a==='import'){
+    const i=document.createElement('input');i.type='file';i.accept='.json,application/json';
+    i.onchange=async()=>{try{const arr=JSON.parse(await i.files[0].text());let n=0;
+      for(const[k,v]of arr){if(typeof k==='string'&&v&&typeof v==='object'){STORE.set(k,v);persist(k,v);n++}}
+      build();refresh();toast('RESTORED '+n+' RECORDS')}catch(e){toast('NOT A VALID BACKUP')}};
+    i.click();
+  }
+}
+
+/* ---------- router ---------- */
+function renderView(){
+  const r=ui.route;let h,crumb='';
+  if(r==='dashboard'){h=dashboard();crumb='DASHBOARD'}
+  else if(r.startsWith('rec-')){const x=RECS.get(r.slice(4));h=recordView(r.slice(4));crumb=x?(TYPES[x.type]+' / '+x.title).toUpperCase():''}
+  else if(r==='cases'){h=casesView();crumb='INVESTIGATIONS'}
+  else if(r==='search'){h=searchView();crumb='SEARCH'}
+  else if(r==='connections'){h=connectionsView();crumb='CONNECTIONS'}
+  else if(r==='system'){h=systemView();crumb='SYSTEM'}
+  else{
+    const[area,sub]=r.split(/-(.+)/);
+    if(area==='locations'){h=locationsView(sub&&LOCG[sub]?sub:null);crumb='LOCATIONS'}
+    else if(area==='evidence'){h=evidenceView(sub);crumb='EVIDENCE'}
+    else if(area==='timeline'){h=timelineView(sub);crumb='TIMELINE'}
+    else if(area==='people'){h=groupedView('people','person',PEOPLEG,sub,'People','Character dossiers: what is known, what is not, and who they connect to.','Add person');crumb='PEOPLE'}
+    else if(area==='archives'){h=groupedView('archives','archive',ARCHG,sub,'Archives','Source documents and registers, kept apart from the clues found at locations.','Add archive item');crumb='ARCHIVES'}
+    else if(area==='notes'){h=groupedView('notes','note',NOTEG,sub,'Notes','Field notes, theories and contradictions.','Add note');crumb='NOTES'}
+    else if(area==='media'){h=groupedView('media','media',MEDIAG,sub,'Media','Photographs, scans and maps. Audio recordings can be logged as records with a description.','Add media');crumb='MEDIA'}
+    else{h=head('Not found','Page not found','')+`<a class="btn" href="#dashboard">Back to dashboard</a>`}
+  }
+  $('#view').innerHTML=h;$('#crumb').textContent=crumb;
+}
+function refresh(){renderNav();renderView()}
+function go(){ui.route=location.hash.slice(1)||'dashboard';const em=ui.route.match(/^evidence-([a-z]+)/);if(em){ui.open.add('evidence');ui.open.add('ev-'+em[1])}if(ui.route!=='search'&&$('#q')&&ui.q&&document.activeElement!==$('#q')){}refresh();$('#main').scrollTop=0}
+window.addEventListener('hashchange',go);
+build();go();initStore();
+</script>
+
+</body></html>
